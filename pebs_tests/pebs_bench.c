@@ -249,14 +249,19 @@ int run_benchs(size_t size_in_bytes,
   pe_attr_sampling.size = sizeof(pe_attr_sampling);
   pe_attr_sampling.type = PERF_TYPE_RAW;
   pe_attr_sampling.config = 0x100b; // MEM_INST_RETIRED.LATENCY_ABOVE_THRESHOLD
-  pe_attr_sampling.disabled = 1;
+
   pe_attr_sampling.config1 = 3; // latency threshold
   pe_attr_sampling.sample_period = period;
   pe_attr_sampling.precise_ip = 2;
-  pe_attr_sampling.pinned = 1;
+
   pe_attr_sampling.sample_type = PERF_SAMPLE_IP | PERF_SAMPLE_ADDR | PERF_SAMPLE_WEIGHT | PERF_SAMPLE_DATA_SRC;
+
+  pe_attr_sampling.read_format = 0;
+  pe_attr_sampling.disabled = 1;
+  pe_attr_sampling.pinned = 1;
   pe_attr_sampling.exclude_kernel = 1;
   pe_attr_sampling.exclude_hv = 1;
+
   int memory_sampling_fd = perf_event_open(&pe_attr_sampling, 0, CPU, -1, 0);
   if (memory_sampling_fd == -1) {
     printf("perf_event_open failed for sampling: %s\n", strerror(errno));
