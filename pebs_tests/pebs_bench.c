@@ -261,6 +261,7 @@ int run_benchs(size_t size_in_bytes,
   pe_attr_sampling.pinned = 1;
   pe_attr_sampling.exclude_kernel = 1;
   pe_attr_sampling.exclude_hv = 1;
+  pe_attr_sampling.wakeup_events = 1;
 
   int memory_sampling_fd = perf_event_open(&pe_attr_sampling, 0, CPU, -1, 0);
   if (memory_sampling_fd == -1) {
