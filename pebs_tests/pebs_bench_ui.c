@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 //#define PRINT
 
-static int is_served_by_memory(union perf_mem_data_src data_src) {
+static int is_served_by_local_memory(union perf_mem_data_src data_src) {
   if (data_src.mem_lvl & PERF_MEM_LVL_MISS) {
     if (data_src.mem_lvl & PERF_MEM_LVL_L3) {
       return 1;
@@ -15,11 +16,21 @@ static int is_served_by_memory(union perf_mem_data_src data_src) {
   } else if (data_src.mem_lvl & PERF_MEM_LVL_HIT) {
     if (data_src.mem_lvl & PERF_MEM_LVL_LOC_RAM) {
       return 1;
-    } else if (data_src.mem_lvl & PERF_MEM_LVL_REM_RAM1) {
+    } else if (data_src.mem_lvl & PERF_MEM_LVL_UNC) {
+      return 1;
+    } else {
+      return 0;
+    }
+  } else {
+    return 0;
+  }
+}
+
+static int is_served_by_remote_memory(union perf_mem_data_src data_src) {
+  if (data_src.mem_lvl & PERF_MEM_LVL_HIT) {
+    if (data_src.mem_lvl & PERF_MEM_LVL_REM_RAM1) {
       return 1;
     } else if (data_src.mem_lvl & PERF_MEM_LVL_REM_RAM2) {
-      return 1;
-    } else if (data_src.mem_lvl & PERF_MEM_LVL_UNC) {
       return 1;
     } else {
       return 0;
@@ -220,7 +231,8 @@ int compar_latency(const void* a1, const void* a2) {
 void print_samples(struct perf_event_mmap_page *metadata_page, display_order order, uint64_t start_addr, uint64_t end_addr, int nb_samples_estimated) {
 
   int remote_cache_count = 0;
-  int memory_count = 0;
+  int local_memory_count = 0;
+  int remote_memory_count = 0;
   int cache_count = 0;
   int in_malloced_count = 0;
   int in_malloced_count_4 = 0;
@@ -228,7 +240,9 @@ void print_samples(struct perf_event_mmap_page *metadata_page, display_order ord
   int in_malloced_count_2 = 0;
   int nb_samples = 0;
   uint64_t latency = 0;
-  uint64_t latency_memory = 0;
+  uint64_t latency_local_memory = 0;
+  uint64_t latency_remote_memory = 0;
+  int served_by_cpt;
 
   if (metadata_page != NULL) {
     uint64_t head = metadata_page->data_head;
@@ -266,17 +280,28 @@ void print_samples(struct perf_event_mmap_page *metadata_page, display_order ord
 	if (sample->addr >= start_addr && sample->addr <= end_addr) {
 	  in_malloced_count++;
 	}
+
+	served_by_cpt = 0;
 	if (is_served_by_remote_cache(sample->data_src)) {
 	  remote_cache_count++;
+	  served_by_cpt++;
 	}
 	if (is_served_by_local_cache(sample->data_src)) {
 	  cache_count++;
+	  served_by_cpt++;
 	}
-	if (is_served_by_memory(sample->data_src) || is_served_by_remote_cache(sample->data_src)) {
-	  memory_count++;
-	  latency_memory += sample->weight;
+	if (is_served_by_local_memory(sample->data_src)) {
+	  local_memory_count++;
+	  latency_local_memory += sample->weight;
+	  served_by_cpt++;
+	}
+	if (is_served_by_remote_memory(sample->data_src)) {
+	  remote_memory_count++;
+	  latency_remote_memory += sample->weight;
+	  served_by_cpt++;
 	}
 	latency += sample->weight;
+	assert(served_by_cpt == 1);
       }
       i = i + header -> size;
       header = (struct perf_event_header *)((char *)header + header -> size);
@@ -290,28 +315,27 @@ void print_samples(struct perf_event_mmap_page *metadata_page, display_order ord
     // Print the list of samples
 #ifdef PRINT
     printf("\n");
-      for (int i = 0; i < nb_samples; i++) {
-	struct sample *sample = &samples[i];
-	printf("%-20" PRIx64, sample -> ip);
-	printf("%-20" PRIx64, sample -> addr);
-	if (sample->addr >= start_addr && sample->addr <= end_addr) {
-	  printf("%-10s", "in");
-	} else {
-	  printf("%-10s", "out");
-	}
-	printf("%-10" PRIu64, sample -> weight);
-	char *level = get_data_src_level(sample -> data_src);
-	printf("%-30s", level);
-	free(level);
-	printf("%-10s", get_snoop(sample -> data_src));
-	printf("%-10s", get_tlb_string(sample -> data_src));
-	printf("\n");
+    for (int i = 0; i < nb_samples; i++) {
+      struct sample *sample = &samples[i];
+      printf("%-20" PRIx64, sample -> ip);
+      printf("%-20" PRIx64, sample -> addr);
+      if (sample->addr >= start_addr && sample->addr <= end_addr) {
+	printf("%-10s", "in");
+      } else {
+	printf("%-10s", "out");
       }
+      printf("%-10" PRIu64, sample -> weight);
+      char *level = get_data_src_level(sample -> data_src);
+      printf("%-30s", level);
+      free(level);
+      printf("%-10s", get_snoop(sample -> data_src));
+      printf("%-10s", get_tlb_string(sample -> data_src));
+      printf("\n");
+    }
 #endif
-  } else {
-    nb_samples = 198;
   }
 
+  printf("\n");
   printf("%d samples in malloced memory on %d samples (%.3f%%)\n", in_malloced_count, nb_samples, (in_malloced_count / (float) nb_samples * 100));
   printf("%d samples in first half   of malloced memory on %d samples (%.3f%%)\n", in_malloced_count_2, nb_samples, (in_malloced_count_2 / (float) nb_samples * 100));
   printf("%d samples in first third   of malloced memory on %d samples (%.3f%%)\n", in_malloced_count_3, nb_samples, (in_malloced_count_3 / (float) nb_samples * 100));
@@ -319,8 +343,10 @@ void print_samples(struct perf_event_mmap_page *metadata_page, display_order ord
   printf("\n");
   printf("%d remote cache samples on %d samples (%.3f%%)\n", remote_cache_count, nb_samples, (remote_cache_count / (float) nb_samples * 100));
   printf("%d local  cache samples on %d samples (%.3f%%)\n", cache_count, nb_samples, (cache_count / (float) nb_samples * 100));
-  printf("%d memory samples on %d samples (%.3f%%)\n", memory_count, nb_samples, (memory_count / (float) nb_samples * 100));
+  printf("%d local memory samples on %d samples (%.3f%%)\n", local_memory_count, nb_samples, (local_memory_count / (float) nb_samples * 100));
+  printf("%d remote memory samples on %d samples (%.3f%%)\n", remote_memory_count, nb_samples, (remote_memory_count / (float) nb_samples * 100));
   printf("\n");
   printf("Average latency = %0.2f ns (%0.2f cycles for frequency = 2.668 Giga hertz)\n", (latency / (float) nb_samples), (latency / (float) nb_samples) * (1E9 / 266800000.0));
-  printf("Average memory latency = %0.2f ns\n", (latency_memory / (float) memory_count));
+  printf("Average local memory latency = %0.2f ns\n", (latency_local_memory / (float) local_memory_count));
+  printf("Average remote memory latency = %0.2f ns\n", (latency_remote_memory / (float) remote_memory_count));
 }

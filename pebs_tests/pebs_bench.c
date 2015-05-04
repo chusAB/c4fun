@@ -17,15 +17,15 @@
 #include "pebs_bench.h"
 #include "pebs_bench_ui.h"
 
-#define CPU 0
-#define NUMA_NODE 1
+#define CPU 2
+#define NUMA_NODE 0
 #define NUMA_ALLOC 1 /* Set to one to use numa_alloc */
 
 /* Used to control what we count */
 #define CORE_COUNT_INST
 #define CORE_COUNT_LOADS
-/* #define CORE_MEM_UNCORE_RETIRED_LOCAL_DRAM_AND_REMOTE_CACHE_HIT
-   #define CORE_OFFCORE_COUNT_REMOTE_CACHE */
+/* #define CORE_MEM_UNCORE_RETIRED_LOCAL_DRAM_AND_REMOTE_CACHE_HIT*/
+#define CORE_OFFCORE_COUNT_REMOTE_CACHE
 #define CORE_OFFCORE_COUNT_LOCAL_DRAM
 #define CORE_OFFCORE_COUNT_REMOTE_DRAM
 #define CORE_PEBS_SAMPLING
@@ -261,7 +261,8 @@ int run_benchs(size_t size_in_bytes,
     return -1;
   }
   long page_size = sysconf(_SC_PAGESIZE);
-  size_t mmap_len = page_size + page_size * 1024;
+  int nb_pages = 1024;
+  size_t mmap_len = (1 + nb_pages) * page_size;
   struct perf_event_mmap_page *metadata_page = mmap(NULL, mmap_len, PROT_WRITE, MAP_SHARED, memory_sampling_fd, 0);
   if (metadata_page == MAP_FAILED) {
     fprintf (stderr, "Couldn't mmap file descriptor: %s - errno = %d\n",
@@ -376,19 +377,19 @@ int run_benchs(size_t size_in_bytes,
   printf("\n");
   printf("%-80s = %15.3f \n",       "time (milliseconds)", elapsedTime);
   printf("%-80s = %15" PRIu64 "\n", "Page faults count (software event)", page_faults_count);
-#ifdef UNCORE_COUNT_READS
-  if (access_mode == access_seq) {
-    printf("%-80s = %15" PRId64 " (expected = %" PRId64 " considering each cache line is loaded once only)\n", "64 bytes cache line reads from RAM count (uncore event: QMC_NORMAL_READS.ANY)", memory_reads_count, (size_in_bytes / 64));
-  } else {
-    printf("%-80s = %15" PRId64 "\n", "64 bytes cache line reads from RAM count (uncore event: QMC_NORMAL_READS.ANY)", memory_reads_count);
-  }
-#endif
 #ifdef CORE_COUNT_INST
   printf("%-80s = %15" PRId64 "\n", "instructions count (core event: INST_RETIRED.ANY)", insts_count);
 #endif
 #ifdef CORE_COUNT_LOADS
   int nb_elems = size_in_bytes / sizeof(ELEM_TYPE);
   printf("%-80s = %15" PRId64 " (expected = %d)\n", "loads count (core event: MEM_INST_RETIRED.LOADS)", loads_count, nb_elems);
+#endif
+#ifdef UNCORE_COUNT_READS
+  if (access_mode == access_seq) {
+    printf("%-80s = %15" PRId64 " (expected = %" PRId64 " considering each cache line is loaded once only)\n", "64 bytes cache line reads from RAM count (uncore event: QMC_NORMAL_READS.ANY)", memory_reads_count, (size_in_bytes / 64));
+  } else {
+    printf("%-80s = %15" PRId64 "\n", "64 bytes cache line reads from RAM count (uncore event: QMC_NORMAL_READS.ANY)", memory_reads_count);
+  }
 #endif
 #ifdef CORE_MEM_UNCORE_RETIRED_LOCAL_DRAM_AND_REMOTE_CACHE_HIT
   printf("%-80s = %15" PRId64 "\n", "local ram & remote cache count (core event: MEM_UNCORE_RETIRED:L_DRAM_REM_CACHE)", mem_uncore_loc_rem_count);
@@ -408,7 +409,6 @@ int run_benchs(size_t size_in_bytes,
     printf("more samples than space in mmap allocated ring buffer\n");
     return -1;
   }
-  printf("\n");
   int nb_elems2 = size_in_bytes / sizeof(ELEM_TYPE);
   print_samples(metadata_page, ADDR, (uint64_t)memory, (uint64_t)memory + size_in_bytes, nb_elems2 / period);
 #endif

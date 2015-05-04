@@ -131,109 +131,110 @@ void usage(const char *prog_name) {
 
 int main(int argc, char **argv) {
 
- /* /\** */
- /*  * Check and get arguments. */
- /*  *\/ */
- /*  if (argc != 4) { */
- /*    usage(argv[0]); */
- /*    return -1; */
- /*  } */
- /*  size_t max_size = atol(argv[1]) * 1024; */
- /*  size_t nb_reads = atol(argv[2]); */
- /*  enum access_mode_t access_mode; */
- /*  if (!strcmp(argv[3], "seq")) { */
- /*    access_mode = access_seq; */
- /*  } else if (!strcmp(argv[3], "rand")) { */
- /*    access_mode = access_rand; */
- /*  } else { */
- /*    printf("Unknown access_mode %s\n", argv[3]); */
- /*    usage(argv[0]); */
- /*    return -1; */
- /*  } */
+ /**
+  * Check and get arguments.
+  */
+  if (argc != 4) {
+    usage(argv[0]);
+    return -1;
+  }
+  size_t max_size = atol(argv[1]) * 1024;
+  size_t nb_reads = atol(argv[2]);
+  enum access_mode_t access_mode;
+  if (!strcmp(argv[3], "seq")) {
+    access_mode = access_seq;
+  } else if (!strcmp(argv[3], "rand")) {
+    access_mode = access_rand;
+  } else {
+    printf("Unknown access_mode %s\n", argv[3]);
+    usage(argv[0]);
+    return -1;
+  }
 
- /*  i386_cpuid_caches(); */
- /*  printf("L1 = %u\n", l1); */
- /*  printf("L2 = %u\n", l2); */
- /*  printf("L3 = %u\n\n", l3); */
+  i386_cpuid_caches();
+  printf("L1 = %u\n", l1);
+  printf("L2 = %u\n", l2);
+  printf("L3 = %u\n\n", l3);
 
-  /* /\** */
-  /*  * Measure time to measure time :-) */
-  /*  *\/ */
-  /* struct timespec start, end; */
-  /* clock_gettime(CLOCK_REALTIME, &start); */
-  /* int nb_rep = 1E6; */
-  /* for (int i = 0; i < nb_rep; i++) { */
-  /*   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); */
-  /* } */
-  /* clock_gettime(CLOCK_REALTIME, &end); */
-  /* uint64_t ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec); */
-  /* printf("Time for clock_gettime(CLOCK_PROCESS_CPUTIME_ID) = %" PRIu64 " nanoseconds (ellapsed = %ld)\n", ellapsed / nb_rep, ellapsed); */
+  /**
+   * Measure time to measure time :-)
+   */
+  struct timespec start, end;
+  clock_gettime(CLOCK_REALTIME, &start);
+  int nb_rep = 1E6;
+  for (int i = 0; i < nb_rep; i++) {
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+  }
+  clock_gettime(CLOCK_REALTIME, &end);
+  uint64_t ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec);
+  printf("Time for clock_gettime(CLOCK_PROCESS_CPUTIME_ID) = %" PRIu64 " nanoseconds (ellapsed = %ld)\n", ellapsed / nb_rep, ellapsed);
 
   /**
    * Measure time to measure time with an other function :-)
    */
-  struct timespec start, end;
-  int nb_rep = 1E6;
   clock_gettime(CLOCK_REALTIME, &start);
   for (int i = 0; i < nb_rep; i++) {
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
   }
   clock_gettime(CLOCK_REALTIME, &end);
-  uint64_t ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec);
+  ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec);
   printf("Time for clock_gettime(CLOCK_THREAD_CPUTIME_ID) = %" PRIu64 " nanoseconds (ellapsed = %ld)\n", ellapsed / nb_rep, ellapsed);
 
- /*  /\** */
-/*    * Measure time to measure time with an other function :-) */
-/*    *\/ */
-/*   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start); */
-/*   for (int i = 0; i < nb_rep; i++) { */
-/*     clock_gettime(CLOCK_REALTIME, &end); */
-/*   } */
-/*   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); */
-/*   ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec); */
-/*   printf("Time for clock_gettime(CLOCK_REAL_TIME) = %" PRIu64 " nanoseconds (ellapsed = %ld)\n", ellapsed / nb_rep, ellapsed); */
+  /**
+   * Measure time to measure time with an other function :-)
+   */
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+  for (int i = 0; i < nb_rep; i++) {
+    clock_gettime(CLOCK_REALTIME, &end);
+  }
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+  ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec);
+  printf("Time for clock_gettime(CLOCK_REAL_TIME) = %" PRIu64 " nanoseconds (ellapsed = %ld)\n", ellapsed / nb_rep, ellapsed);
 
-/*   /\** */
-/*    * Measure time to measure time with an other function :-) */
-/*    *\/ */
-/*   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start); */
-/*   struct timeval tv; */
-/*   for (int i = 0; i < nb_rep; i++) { */
-/*     gettimeofday(&tv, NULL); */
-/*   } */
-/*   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); */
-/*   ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec); */
-/*   printf("Time for gettimeofday = %" PRIu64 " nanoseconds (ellapsed = %ld)\n\n", ellapsed / nb_rep, ellapsed); */
+  /**
+   * Measure time to measure time with an other function :-)
+   */
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+  struct timeval tv;
+  for (int i = 0; i < nb_rep; i++) {
+    gettimeofday(&tv, NULL);
+  }
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+  ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec);
+  printf("Time for gettimeofday = %" PRIu64 " nanoseconds (ellapsed = %ld)\n\n", ellapsed / nb_rep, ellapsed);
 
-/*   printf("%-10s %-10s", "Size (KiB)", "Time (ns)\n"); */
-/*   for (size_t size = 1024; size <= max_size; size = step(size)) { */
-/*     uint64_t *memory = malloc(size); */
-/*     assert(memory); */
-/*     fill_memory(memory, size, access_mode); */
-/*     register long remaining = nb_reads; */
-/* #ifdef ASM */
-/*     uint64_t *p = memory; */
-/* #else */
-/*     register uint64_t *p = memory; */
-/* #endif */
-/*     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start); */
-/* #ifdef ASM */
-/*     asm("movq %0, %%rbx;" */
-/* 	: */
-/* 	:"r" (p) */
-/* 	:"%rbx"); */
-/* #endif */
-/*     while (remaining > 0) { */
-/* #ifdef ASM */
-/*       HUNDRED_ASM */
-/* #else */
-/*       HUNDRED */
-/* #endif */
-/*       remaining -= 100; */
-/*     } */
-/*     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end); */
-/*     ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec); */
-/*     printf("%-10zu %-10f" "\n", size / 1024, ellapsed / (float)nb_reads); */
-/*   } */
+  /**
+   * Perform memory accesse
+   */
+  printf("%-10s %-10s", "Size (KiB)", "Time (ns)\n");
+  for (size_t size = 1024; size <= max_size; size = step(size)) {
+    uint64_t *memory = malloc(size);
+    assert(memory);
+    fill_memory(memory, size, access_mode);
+    register long remaining = nb_reads;
+#ifdef ASM
+    uint64_t *p = memory;
+#else
+    register uint64_t *p = memory;
+#endif
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+#ifdef ASM
+    asm("movq %0, %%rbx;"
+	:
+	:"r" (p)
+	:"%rbx");
+#endif
+    while (remaining > 0) {
+#ifdef ASM
+      HUNDRED_ASM
+#else
+      HUNDRED
+#endif
+      remaining -= 100;
+    }
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+    ellapsed = (end.tv_sec * 1E9 + end.tv_nsec) - (start.tv_sec * 1E9 + start.tv_nsec);
+    printf("%-10zu %-10f %-10f\n", size / 1024, ellapsed / (float)nb_reads, (float)nb_reads *1E9 *8/ ellapsed / 1E6);
+  }
   return 0;
 }
