@@ -253,6 +253,7 @@ int run_benchs(size_t size_in_bytes,
   pe_attr_sampling.config1 = 3; // latency threshold
   pe_attr_sampling.sample_period = period;
   pe_attr_sampling.precise_ip = 2;
+  pe_attr_sampling.pinned = 1;
   pe_attr_sampling.sample_type = PERF_SAMPLE_IP | PERF_SAMPLE_ADDR | PERF_SAMPLE_WEIGHT | PERF_SAMPLE_DATA_SRC;
   pe_attr_sampling.exclude_kernel = 1;
   int memory_sampling_fd = perf_event_open(&pe_attr_sampling, 0, CPU, -1, 0);
