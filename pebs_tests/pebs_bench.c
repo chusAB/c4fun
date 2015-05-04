@@ -261,7 +261,7 @@ int run_benchs(size_t size_in_bytes,
     return -1;
   }
   long page_size = sysconf(_SC_PAGESIZE);
-  int nb_pages = 1024;
+  int nb_pages = 8;
   size_t mmap_len = (1 + nb_pages) * page_size;
   struct perf_event_mmap_page *metadata_page = mmap(NULL, mmap_len, PROT_WRITE, MAP_SHARED, memory_sampling_fd, 0);
   if (metadata_page == MAP_FAILED) {
