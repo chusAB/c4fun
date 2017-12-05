@@ -31,13 +31,13 @@ runs = []
 for size in MEM_SIZES:
     for freq in FREQS:
         for mode in MODES:
-             cmd = ['pebs_bench', str(size), mode, str(freq)]
+             cmd = ['./pebs_bench', str(size), mode, str(freq)]
              print('running ' + str(cmd) + ' ...')
              out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
              for line in out.split('\n'):
                  if line.find('memory samples on') != -1:
                      splits = line.split(' ')
-                     run = Bench_Run(size, freq, mode, long(splits[4]), long(splits[0]))
+                     run = Bench_Run(size, freq, mode, long(splits[5]), long(splits[0]))
                      runs.append(run)
                      break
 

@@ -336,17 +336,21 @@ void print_samples(struct perf_event_mmap_page *metadata_page, display_order ord
   }
 
   printf("\n");
-  printf("%d samples in malloced memory on %d samples (%.3f%%)\n", in_malloced_count, nb_samples, (in_malloced_count / (float) nb_samples * 100));
-  printf("%d samples in first half   of malloced memory on %d samples (%.3f%%)\n", in_malloced_count_2, nb_samples, (in_malloced_count_2 / (float) nb_samples * 100));
-  printf("%d samples in first third   of malloced memory on %d samples (%.3f%%)\n", in_malloced_count_3, nb_samples, (in_malloced_count_3 / (float) nb_samples * 100));
-  printf("%d samples in first quarter of malloced memory on %d samples (%.3f%%)\n", in_malloced_count_4, nb_samples, (in_malloced_count_4 / (float) nb_samples * 100));
+
+  printf("----------------- Where are the samples -----------------\n"); 
+  printf("%-8d samples in                  malloced memory on %d samples (%.3f%%)\n", in_malloced_count, nb_samples, (in_malloced_count / (float) nb_samples * 100));
+  printf("%-8d samples in first half    of malloced memory on %d samples (%.3f%%)\n", in_malloced_count_2, nb_samples, (in_malloced_count_2 / (float) nb_samples * 100));
+  printf("%-8d samples in first third   of malloced memory on %d samples (%.3f%%)\n", in_malloced_count_3, nb_samples, (in_malloced_count_3 / (float) nb_samples * 100));
+  printf("%-8d samples in first quarter of malloced memory on %d samples (%.3f%%)\n", in_malloced_count_4, nb_samples, (in_malloced_count_4 / (float) nb_samples * 100));
   printf("\n");
-  printf("%d remote cache samples on %d samples (%.3f%%)\n", remote_cache_count, nb_samples, (remote_cache_count / (float) nb_samples * 100));
-  printf("%d local  cache samples on %d samples (%.3f%%)\n", cache_count, nb_samples, (cache_count / (float) nb_samples * 100));
-  printf("%d local memory samples on %d samples (%.3f%%)\n", local_memory_count, nb_samples, (local_memory_count / (float) nb_samples * 100));
-  printf("%d remote memory samples on %d samples (%.3f%%)\n", remote_memory_count, nb_samples, (remote_memory_count / (float) nb_samples * 100));
+  printf("----------------- In which level of memory -----------------\n"); 
+  printf("%-8d remote cache samples  on %d samples (%.3f%%)\n", remote_cache_count, nb_samples, (remote_cache_count / (float) nb_samples * 100));
+  printf("%-8d local  cache samples  on %d samples (%.3f%%)\n", cache_count, nb_samples, (cache_count / (float) nb_samples * 100));
+  printf("%-8d local memory samples  on %d samples (%.3f%%)\n", local_memory_count, nb_samples, (local_memory_count / (float) nb_samples * 100));
+  printf("%-8d remote memory samples on %d samples (%.3f%%)\n", remote_memory_count, nb_samples, (remote_memory_count / (float) nb_samples * 100));
   printf("\n");
-  printf("Average latency = %0.2f ns (%0.2f cycles for frequency = 2.668 Giga hertz)\n", (latency / (float) nb_samples), (latency / (float) nb_samples) * (1E9 / 266800000.0));
-  printf("Average local memory latency = %0.2f ns\n", (latency_local_memory / (float) local_memory_count));
+  printf("----------------- Average latencies -----------------\n"); 
+  printf("Average latency               = %0.2f ns (%0.2f cycles for frequency = 2.668 Giga hertz)\n", (latency / (float) nb_samples), (latency / (float) nb_samples) * (1E9 / 266800000.0));
+  printf("Average local memory latency  = %0.2f ns\n", (latency_local_memory / (float) local_memory_count));
   printf("Average remote memory latency = %0.2f ns\n", (latency_remote_memory / (float) remote_memory_count));
 }
